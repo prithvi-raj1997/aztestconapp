@@ -73,20 +73,23 @@ jobs:
       - name: Get Active Revisions with 0% Traffic
         id: list_revisions
         run: |
-          RESOURCE_GROUP="NetworkWatcherRG"
-          CONTAINER_APP="testapp"
+            RESOURCE_GROUP="NetworkWatcherRG"
+            CONTAINER_APP="testapp"
 
-          REVISIONS_LIST=$(az containerapp revision list --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --all \
+            REVISIONS_LIST=$(az containerapp revision list --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --all \
             --query "[?properties.trafficWeight==\`0.0\` && properties.active==\`true\`].[name]" -o tsv || echo "")
 
-          if [ -z "$REVISIONS_LIST" ]; then
+            if [ -z "$REVISIONS_LIST" ]; then
             echo "No active revisions with 0% traffic found."
             echo "found_revisions=false" >> $GITHUB_ENV
-          else
+            else
+            # Convert multi-line output into a space-separated string
+            REVISIONS_LIST=$(echo "$REVISIONS_LIST" | tr '\n' ' ')
             echo "Found revisions: $REVISIONS_LIST"
             echo "REVISIONS_LIST=$REVISIONS_LIST" >> $GITHUB_ENV
             echo "found_revisions=true" >> $GITHUB_ENV
-          fi
+            fi
+
 
       - name: Deactivate Old Active Revisions
         if: env.found_revisions == 'true'
