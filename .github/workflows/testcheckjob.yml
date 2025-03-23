@@ -1,0 +1,100 @@
+name: Manage Azure Container App Revisions check box
+
+on:
+  workflow_dispatch:
+    inputs:
+      deactivate_old_revisions:
+        description: "Deactivate older active revisions with 0% traffic"
+        required: false
+        type: boolean
+      rollback_revision:
+        description: "Revision to reactivate (optional)"
+        required: false
+        type: string
+      rollback:
+        description: "Enable rollback to a specific revision"
+        required: false
+        type: boolean
+      AZURE_TENANT_ID:
+        description: "Azure Tenant ID (required)"
+        required: true
+        type: string      
+
+jobs:
+  deactivate_old_revisions:
+    name: Deactivate Older Active Revisions with 0% Traffic
+    runs-on: ubuntu-latest
+    if: ${{ inputs.deactivate_old_revisions == true }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ inputs.AZURE_TENANT_ID }}"
+            }
+
+      - name: Get Active Revisions with 0% Traffic
+        id: list_revisions
+        run: |
+          RESOURCE_GROUP="NetworkWatcherRG"
+          CONTAINER_APP="testapp"
+
+          REVISIONS_LIST=$(az containerapp revision list --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --all \
+            --query "[?properties.trafficWeight==\`0.0\` && properties.active==\`true\`].[name]" -o tsv || echo "")
+
+          if [ -z "$REVISIONS_LIST" ]; then
+            echo "No active revisions with 0% traffic found."
+            echo "found_revisions=false" >> $GITHUB_ENV
+          else
+            echo "Found revisions: $REVISIONS_LIST"
+            echo "REVISIONS_LIST=$REVISIONS_LIST" >> $GITHUB_ENV
+            echo "found_revisions=true" >> $GITHUB_ENV
+          fi
+
+      - name: Deactivate Old Active Revisions
+        if: env.found_revisions == 'true'
+        run: |
+          RESOURCE_GROUP="NetworkWatcherRG"
+          CONTAINER_APP="testapp"
+
+          for REVISION in $REVISIONS_LIST; do
+            echo "Deactivating revision: $REVISION"
+            az containerapp revision deactivate --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --revision "$REVISION"
+          done
+
+  rollback:
+    name: Rollback to Specific Revision
+    runs-on: ubuntu-latest
+    if: ${{ inputs.rollback == true && inputs.rollback_revision != '' }}
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ inputs.AZURE_TENANT_ID }}"
+            }
+
+      - name: Reactivate and Assign 100% Traffic to the Specified Revision
+        run: |
+          RESOURCE_GROUP="NetworkWatcherRG"
+          CONTAINER_APP="testapp"
+          ROLLBACK_REVISION="${{ inputs.rollback_revision }}"
+
+          echo "Reactivating revision: $ROLLBACK_REVISION"
+          az containerapp revision activate --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --revision "$ROLLBACK_REVISION"
+
+          echo "Assigning 100% traffic to revision: $ROLLBACK_REVISION"
+          az containerapp ingress traffic set --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --revision-weight "$ROLLBACK_REVISION=100"
