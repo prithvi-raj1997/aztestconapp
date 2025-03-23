@@ -25,6 +25,7 @@ jobs:
               "username": "${{ secrets.AZURE_USERNAME }}",
               "password": "${{ secrets.AZURE_PASSWORD }}"
             }
+          allow-no-subscriptions: true
 
       - name: Get Active Revisions with 0% Traffic
         id: list_revisions
@@ -70,6 +71,7 @@ jobs:
               "username": "${{ secrets.AZURE_USERNAME }}",
               "password": "${{ secrets.AZURE_PASSWORD }}"
             }
+          allow-no-subscriptions: true
 
       - name: Reactivate and Assign 100% Traffic to the Specified Revision
         run: |
