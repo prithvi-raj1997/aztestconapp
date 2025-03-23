@@ -1,4 +1,4 @@
-name: Manage Azure Container App Revisions
+name: Manage Azure Container App Revisions selected Jobs
 
 on:
   workflow_dispatch:
