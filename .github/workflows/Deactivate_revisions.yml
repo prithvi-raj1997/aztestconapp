@@ -45,6 +45,8 @@ jobs:
             echo "No active revisions with 0% traffic found."
             echo "found_revisions=false" >> $GITHUB_ENV
           else
+            # Convert multi-line output into a space-separated string
+            REVISIONS_LIST=$(echo "$REVISIONS_LIST" | tr '\n' ' ')
             echo "Found revisions: $REVISIONS_LIST"
             echo "REVISIONS_LIST=$REVISIONS_LIST" >> $GITHUB_ENV
             echo "found_revisions=true" >> $GITHUB_ENV
