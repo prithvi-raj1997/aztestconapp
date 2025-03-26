@@ -28,7 +28,7 @@ jobs:
               "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
               "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
               "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
-              "tenantId": "${{ inputs.AZURE_TENANT_ID }}"
+              "tenantId": "b41b72d0-4e9f-4c26-8a69-f949f367c91d"
             }
       
 
