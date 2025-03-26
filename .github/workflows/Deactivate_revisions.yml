@@ -1,9 +1,9 @@
 name: Deactive Azure Container App Active Revisions
 
 on:
-  push:
-    branches:
-      - feature/*
+  # push:
+  #   branches:
+  #     - feature/*
   workflow_dispatch:
     inputs:
       AZURE_TENANT_ID:
