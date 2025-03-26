@@ -1,0 +1,59 @@
+name: Deactive Azure Container App Active Revisions
+
+on:
+  workflow_dispatch:
+    inputs:
+      AZURE_TENANT_ID:
+        description: "Azure Tenant ID (required)"
+        required: true
+        type: string      
+
+jobs:
+  deactivate_old_revisions:
+    name: Deactivate Older Active Revisions with 0% Traffic
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ inputs.AZURE_TENANT_ID }}"
+            }
+      
+
+      - name: Get Active Revisions with 0% Traffic
+        id: list_revisions
+        run: |
+          RESOURCE_GROUP="NetworkWatcherRG"
+          CONTAINER_APP="testapp"
+
+          REVISIONS_LIST=$(az containerapp revision list --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --all \
+            --query "[?properties.trafficWeight==\`0.0\` && properties.active==\`true\`].[name]" -o tsv || echo "")
+
+          if [ -z "$REVISIONS_LIST" ]; then
+            echo "No active revisions with 0% traffic found."
+            echo "found_revisions=false" >> $GITHUB_ENV
+          else
+            echo "Found revisions: $REVISIONS_LIST"
+            echo "REVISIONS_LIST=$REVISIONS_LIST" >> $GITHUB_ENV
+            echo "found_revisions=true" >> $GITHUB_ENV
+          fi
+
+      - name: Deactivate Old Active Revisions
+        if: env.found_revisions == 'true'
+        run: |
+          RESOURCE_GROUP="NetworkWatcherRG"
+          CONTAINER_APP="testapp"
+
+          for REVISION in $REVISIONS_LIST; do
+            echo "Deactivating revision: $REVISION"
+            az containerapp revision deactivate --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --revision "$REVISION"
+          done
