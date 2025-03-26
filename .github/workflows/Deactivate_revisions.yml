@@ -35,8 +35,8 @@ jobs:
       - name: Get Active Revisions with 0% Traffic
         id: list_revisions
         run: |
-          RESOURCE_GROUP="NetworkWatcherRG"
-          CONTAINER_APP="testapp"
+          RESOURCE_GROUP="testrg1"
+          CONTAINER_APP="testapp1"
 
           REVISIONS_LIST=$(az containerapp revision list --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --all \
             --query "[?properties.trafficWeight==\`0.0\` && properties.active==\`true\`].[name]" -o tsv || echo "")
