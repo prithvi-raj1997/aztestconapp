@@ -55,8 +55,8 @@ jobs:
       - name: Deactivate Old Active Revisions
         if: env.found_revisions == 'true'
         run: |
-          RESOURCE_GROUP="NetworkWatcherRG"
-          CONTAINER_APP="testapp"
+          RESOURCE_GROUP="testrg1"
+          CONTAINER_APP="testapp1"
 
           for REVISION in $REVISIONS_LIST; do
             echo "Deactivating revision: $REVISION"
