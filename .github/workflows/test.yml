@@ -8,7 +8,7 @@ on:
         required: false
         type: string
       AZURE_TENANT_ID:
-        description: "Specific revision to reactivate (required)"
+        description: "Azure Tenant ID (required)"
         required: true
         type: string      
 

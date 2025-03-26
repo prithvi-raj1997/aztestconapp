@@ -1,0 +1,48 @@
+name: Manage Azure Container App Revisions
+
+on:
+  push:
+    branches:
+      - feature/*
+  workflow_dispatch:
+    inputs:
+      rollback_revision:
+        description: "Specific revision to reactivate (required)"
+        required: true
+        type: string
+      AZURE_TENANT_ID:
+        description: "Azure Tenant ID (required)"
+        required: true
+        type: string      
+
+jobs:
+  
+  rollback:
+    name: Rollback to Specific Revision (if provided)
+    runs-on: ubuntu-latest
+    if: ${{ inputs.rollback_revision != '' }}
+
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: |
+            {
+              "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
+              "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ inputs.AZURE_TENANT_ID }}"
+            }
+      
+
+      - name: Reactivate and Assign 100% Traffic to the Specified Revision
+        run: |
+          RESOURCE_GROUP="testrg1"
+          CONTAINER_APP="testapp1"
+          ROLLBACK_REVISION="${{ inputs.rollback_revision }}"
+
+          echo "Reactivating revision: $ROLLBACK_REVISION"
+          az containerapp revision activate --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --revision "$ROLLBACK_REVISION"
+
+          echo "Assigning 100% traffic to revision: $ROLLBACK_REVISION"
+          az containerapp ingress traffic set --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --revision-weight "$ROLLBACK_REVISION=100"
