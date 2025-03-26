@@ -1,9 +1,9 @@
 name: Rollback Azure Container App Revisions
 
 on:
-  push:
-    branches:
-      - feature/*
+  # push:
+  #   branches:
+  #     - feature/*
   workflow_dispatch:
     inputs:
       rollback_revision:
