@@ -20,7 +20,7 @@ jobs:
   rollback:
     name: Rollback to Specific Revision (if provided)
     runs-on: ubuntu-latest
-    if: ${{ inputs.rollback_revision != '' }}
+    # if: ${{ inputs.rollback_revision != '' }}
 
     steps:
       - name: Azure Login
@@ -31,7 +31,7 @@ jobs:
               "clientId": "${{ secrets.AZURE_CLIENT_ID }}",
               "clientSecret": "${{ secrets.AZURE_CLIENT_SECRET }}",
               "subscriptionId": "${{ secrets.AZURE_SUBSCRIPTION_ID }}",
-              "tenantId": "${{ inputs.AZURE_TENANT_ID }}"
+              "tenantId": "b41b72d0-4e9f-4c26-8a69-f949f367c91d"
             }
       
 
@@ -39,7 +39,7 @@ jobs:
         run: |
           RESOURCE_GROUP="testrg1"
           CONTAINER_APP="testapp1"
-          ROLLBACK_REVISION="${{ inputs.rollback_revision }}"
+          ROLLBACK_REVISION="testapp1--34"
 
           echo "Reactivating revision: $ROLLBACK_REVISION"
           az containerapp revision activate --resource-group "$RESOURCE_GROUP" --name "$CONTAINER_APP" --revision "$ROLLBACK_REVISION"
